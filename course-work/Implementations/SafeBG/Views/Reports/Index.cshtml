@@ -1,0 +1,202 @@
+﻿@model SafeBG.Models.ViewModels.ReportFilterViewModel
+
+@{
+    ViewData["Title"] = "Reports";
+}
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
+
+<div class="container-fluid mt-4">
+    <div class="row">
+
+        <!-- ----------------------- -->
+        <!--        LEFT FILTERS     -->
+        <!-- ----------------------- -->
+
+        <div class="col-md-3">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Филтри</h5>
+                </div>
+
+                <div class="card-body">
+
+                    <form method="get">
+
+                        <!-- Search -->
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Търсене по текст</label>
+                            <input type="text" name="SearchText" value="@Model.SearchText" class="form-control" placeholder="заглавие, описание..." />
+                        </div>
+
+                        <!-- City -->
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Град</label>
+                            <select name="CityId" class="form-select">
+                                <option value="">-- Всички --</option>
+                                @foreach (var c in Model.Cities)
+                                {
+                                    <option value="@c.Id" selected="@(Model.CityId == c.Id)">
+                                        @c.Name
+                                    </option>
+                                }
+                            </select>
+                        </div>
+
+                        <!-- Category -->
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Категория</label>
+                            <select name="CategoryId" class="form-select">
+                                <option value="">-- Всички --</option>
+                                @foreach (var ct in Model.Categories)
+                                {
+                                    <option value="@ct.Id" selected="@(Model.CategoryId == ct.Id)">
+                                        @ct.Name
+                                    </option>
+                                }
+                            </select>
+                        </div>
+
+                        <!-- Status -->
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Статус</label>
+                            <select name="Status" class="form-select">
+                                <option value="">-- Всички --</option>
+                                @foreach (var st in Enum.GetValues(typeof(SafeBG.Models.Enums.ReportStatus)))
+                                {
+                                    <option value="@st" selected="@(Model.Status != null && Model.Status.ToString() == st.ToString())">
+                                        @st
+                                    </option>
+                                }
+                            </select>
+                        </div>
+
+                        <!-- Sort -->
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Сортиране</label>
+                            <select name="SortBy" class="form-select">
+                                <option value="">По подразбиране</option>
+                                <option value="date" selected="@(Model.SortBy == "date")">Дата</option>
+                                <option value="city" selected="@(Model.SortBy == "city")">Град</option>
+                                <option value="category" selected="@(Model.SortBy == "category")">Категория</option>
+                            </select>
+
+                            <div class="form-check mt-2">
+                                <input type="checkbox" name="SortAsc" value="true" class="form-check-input" checked="@Model.SortAsc" />
+                                <label class="form-check-label">Възходящ ред</label>
+                            </div>
+                        </div>
+
+                        <!-- Filter button -->
+                        <button type="submit" class="btn btn-primary w-100">Филтрирай</button>
+
+                        <!-- Clear filters -->
+                        <a href="/Reports/Index" class="btn btn-secondary w-100 mt-2">Изчисти</a>
+
+                    </form>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- ----------------------- -->
+        <!--       RIGHT TABLE       -->
+        <!-- ----------------------- -->
+
+        <div class="col-md-9">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h3>Сигнали</h3>
+                @if (User.Identity.IsAuthenticated && (User.IsInRole("User") || User.IsInRole("Admin")))
+                {
+                    <a href="/Reports/Create" class="btn btn-success">+ Нов сигнал</a>
+                }
+
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-body">
+
+                    <!-- Table -->
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Заглавие</th>
+                                <th>Град</th>
+                                <th>Категория</th>
+                                <th>Дата</th>
+                                <th>Статус</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            @if (Model.Results != null && Model.Results.Any())
+                            {
+                                foreach (var item in Model.Results)
+                                {
+                                    <tr>
+                                        <td>@item.Title</td>
+                                        <td>@item.City?.Name</td>
+                                        <td>@item.Category?.Name</td>
+                                        <td>@item.CreatedAt.ToString("dd.MM.yyyy HH:mm")</td>
+                                        <td>@item.Status</td>
+                                        <td>
+                                            <a href="/Reports/Details/@item.Id" class="btn btn-sm btn-primary">Детайли</a>
+
+                                            @if (User.IsInRole("Admin") || (User.IsInRole("User") && item.CreatedByUserId == User.FindFirst("sub")?.Value))
+                                            {
+                                                <a href="/Reports/Edit/@item.Id" class="btn btn-sm btn-warning">Редакция</a>
+                                                <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-danger btn-sm">Изтрий</a>
+                                            }
+
+
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted">Няма резултати</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+
+                    <!-- Pagination -->
+                    @if (Model.TotalCount > Model.PageSize)
+                    {
+                        int totalPages = (int)Math.Ceiling(Model.TotalCount / (double)Model.PageSize);
+
+                        <nav>
+                            <ul class="pagination">
+
+                                <!-- Previous -->
+                                <li class="page-item @(Model.Page == 1 ? "disabled" : "")">
+                                    <a class="page-link" href="?Page=@(Model.Page - 1)">Назад</a>
+                                </li>
+
+                                <!-- Page numbers -->
+                                @for (int i = 1; i <= totalPages; i++)
+                                {
+                                    <li class="page-item @(Model.Page == i ? "active" : "")">
+                                        <a class="page-link" href="?Page=@i">@i</a>
+                                    </li>
+                                }
+
+                                <!-- Next -->
+                                <li class="page-item @(Model.Page == totalPages ? "disabled" : "")">
+                                    <a class="page-link" href="?Page=@(Model.Page + 1)">Напред</a>
+                                </li>
+
+                            </ul>
+                        </nav>
+                    }
+
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+</div>

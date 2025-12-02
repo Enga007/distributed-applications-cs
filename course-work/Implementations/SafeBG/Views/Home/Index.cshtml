@@ -1,0 +1,60 @@
+﻿@model IEnumerable<SafeBG.Models.Report>
+
+<div class="row">
+
+    <!-- Ляв панел -->
+    <div class="col-md-3">
+        <div class="card p-4 shadow">
+            <h3>Действия</h3>
+
+            <a asp-controller="Reports" asp-action="Create" class="btn btn-success w-100 mb-3">
+                + Нов сигнал
+            </a>
+
+            <a asp-controller="Categories" asp-action="Index" class="btn btn-purple w-100">
+                📌 Категории
+            </a>
+            <a asp-controller="Reports" asp-action="Index" class="btn btn-info mt-3">
+                🔍 Филтри
+            </a>
+
+        </div>
+    </div>
+
+    <!-- Десен панел – списък със сигнали -->
+    <div class="col-md-9">
+        <h2>Всички сигнали</h2>
+
+        @if (!Model.Any())
+        {
+            <div class="alert alert-info mt-3">Няма подадени сигнали.</div>
+        }
+        else
+        {
+            <table class="table table-striped mt-3">
+                <thead>
+                    <tr>
+                        <th>Заглавие</th>
+                        <th>Град</th>
+                        <th>Категория</th>
+                        <th>Дата</th>
+                        <th>Статус</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var r in Model)
+                    {
+                        <tr>
+                            <td>@r.Title</td>
+                            <td>@r.City?.Name</td>
+                            <td>@r.Category?.Name</td>
+                            <td>@r.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</td>
+                            <td>@r.Status</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+
+</div>

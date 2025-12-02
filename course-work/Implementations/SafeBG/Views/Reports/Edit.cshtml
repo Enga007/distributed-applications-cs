@@ -1,0 +1,115 @@
+﻿<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+
+@model SafeBG.Models.Report
+
+@{
+    ViewData["Title"] = "Edit Report";
+}
+
+<h1>Edit Report</h1>
+
+<hr />
+<div class="row">
+    <div class="col-md-6">
+        <form asp-action="Edit">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <input type="hidden" asp-for="Id" />
+
+            <!-- Title -->
+            <div class="form-group">
+                <label asp-for="Title" class="control-label"></label>
+                <input asp-for="Title" class="form-control" />
+                <span asp-validation-for="Title" class="text-danger"></span>
+            </div>
+
+            <!-- Description -->
+            <div class="form-group">
+                <label asp-for="Description" class="control-label"></label>
+                <textarea asp-for="Description" class="form-control"></textarea>
+                <span asp-validation-for="Description" class="text-danger"></span>
+            </div>
+
+            <!-- Latitude -->
+            <div class="form-group">
+                <label asp-for="Latitude" class="control-label"></label>
+                <input asp-for="Latitude" id="Latitude" class="form-control" />
+                <span asp-validation-for="Latitude" class="text-danger"></span>
+            </div>
+
+            <!-- Longitude -->
+            <div class="form-group">
+                <label asp-for="Longitude" class="control-label"></label>
+                <input asp-for="Longitude" id="Longitude" class="form-control" />
+                <span asp-validation-for="Longitude" class="text-danger"></span>
+            </div>
+
+            <!-- MAP -->
+            <div id="map" style="height: 400px; margin-bottom: 20px; border: 2px solid #ccc;"></div>
+
+            <!-- City -->
+            <div class="form-group">
+                <label asp-for="CityId" class="control-label"></label>
+                <select asp-for="CityId" class="form-control" asp-items="ViewBag.CityId"></select>
+            </div>
+
+            <!-- Category -->
+            <div class="form-group">
+                <label asp-for="CategoryId" class="control-label"></label>
+                <select asp-for="CategoryId" class="form-control" asp-items="ViewBag.CategoryId"></select>
+            </div>
+
+            <!-- Hidden fields -->
+            <input type="hidden" asp-for="CreatedAt" />
+            <input type="hidden" asp-for="CreatedByUserId" />
+            <input type="hidden" asp-for="Status" />
+
+            <div class="form-group mt-3">
+                <input type="submit" value="Save" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<!-- MAP SCRIPT -->
+<script>
+    // Запазваме текущите координати
+    var currentLat = @Model.Latitude;
+    var currentLng = @Model.Longitude;
+
+    // Създаваме картата, започваща от текущата позиция
+    var map = L.map('map').setView([currentLat, currentLng], 14);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    var marker = L.marker([currentLat, currentLng]).addTo(map);
+
+    function setMarker(lat, lng) {
+        marker.setLatLng([lat, lng]);
+    }
+
+    map.on('click', function (e) {
+        var lat = e.latlng.lat;
+        var lng = e.latlng.lng;
+
+        setMarker(lat, lng);
+
+        document.getElementById("Latitude").value = lat;
+        document.getElementById("Longitude").value = lng;
+    });
+</script>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

@@ -1,0 +1,94 @@
+﻿@model SafeBG.Models.Report
+
+@{
+    ViewData["Title"] = "Details";
+}
+
+<h2>@Model.Title</h2>
+
+<p><b>Описание:</b> @Model.Description</p>
+<p><b>Град:</b> @Model.City.Name</p>
+<p><b>Категория:</b> @Model.Category.Name</p>
+<p><b>Дата:</b> @Model.CreatedAt.ToString("dd.MM.yyyy HH:mm")</p>
+<p><b>Статус:</b> @Model.Status</p>
+
+<hr />
+
+<h4>Действия</h4>
+
+
+
+
+<div class="d-flex gap-3">
+
+    <!-- Гласуване за репорт -->
+    <form method="post" asp-action="Vote" asp-route-id="@Model.Id">
+        <button class="btn btn-success">👍 Гласувай</button>
+    </form>
+
+    <!-- Показване на формата за коментар -->
+    <button class="btn btn-primary" data-bs-toggle="collapse" data-bs-target="#commentBox">
+        💬 Добави коментар
+    </button>
+</div>
+
+<!-- Форма за нов коментар -->
+<div id="commentBox" class="collapse mt-3">
+    <form method="post" asp-action="AddComment" asp-route-id="@Model.Id">
+        <textarea name="text" class="form-control" rows="3" placeholder="Вашият коментар..." required></textarea>
+        <button class="btn btn-primary mt-2">Публикувай</button>
+    </form>
+</div>
+
+<hr />
+
+<h4>Коментари</h4>
+
+@if (Model.Comments != null && Model.Comments.Any())
+{
+    foreach (var c in Model.Comments.OrderByDescending(x => x.CreatedAt))
+    {
+        var likes = c.Votes.Count(v => v.IsLike);
+        var dislikes = c.Votes.Count(v => !v.IsLike);
+
+        <div class="border p-3 mb-3 rounded">
+
+            <b>@c.User.Email</b> –
+            <small>@c.CreatedAt.ToString("dd.MM.yyyy HH:mm")</small>
+
+            <p>@c.Text</p>
+
+            <div class="mt-2">
+
+                <!-- LIKE -->
+                <form method="post"
+                      asp-action="VoteComment"
+                      asp-controller="Reports"
+                      class="d-inline">
+                    <input type="hidden" name="commentId" value="@c.Id" />
+                    <input type="hidden" name="isLike" value="true" />
+                    <button class="btn btn-sm btn-success">👍 @likes</button>
+                </form>
+
+                <!-- DISLIKE -->
+                <form method="post"
+                      asp-action="VoteComment"
+                      asp-controller="Reports"
+                      class="d-inline">
+                    <input type="hidden" name="commentId" value="@c.Id" />
+                    <input type="hidden" name="isLike" value="false" />
+                    <button class="btn btn-sm btn-danger">👎 @dislikes</button>
+                </form>
+
+            </div>
+        </div>
+    }
+}
+else
+{
+    <p class="text-muted">Няма коментари.</p>
+}
+
+<hr />
+
+<h4>Гласове за отчета: @Model.Votes.Count()</h4>
